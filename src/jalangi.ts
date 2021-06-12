@@ -26,6 +26,8 @@
  *
  */
 
+import {NamedFunction} from "./types/Extensions";
+
 /**
  * <p>
  *     This file is a template for writing a custom Jalangi 2 analysis.  Simply copy this file and rewrite the
@@ -98,6 +100,8 @@
 * @global
 * @class
 */
+
+// DO NOT INSTRUMENT
 export class JalangiAnalysis {
 
 	/**
@@ -140,7 +144,7 @@ export class JalangiAnalysis {
 	 * an object is returned.
 	 *
 	 */
-	invokeFunPre(iid: number, f: Function, base: Object, args: Object[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: Function; base: object; args: Array<any>; skip: boolean; } | undefined {
+	invokeFunPre(iid: number, f: NamedFunction, base: Object, args: Object[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean; } | undefined {
 		return { f: f, base: base, args: args, skip: false };
 	};
 
@@ -188,7 +192,7 @@ export class JalangiAnalysis {
 	 * value that is returned by the actual function invocation.
 	 *
 	 */
-	invokeFun(iid: number, f: Function, base: any, args: any[], result: any, isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { result: any; } | undefined {
+	invokeFun(iid: number, f: NamedFunction, base: any, args: any[], result: any, isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { result: any; } | undefined {
 		return { result: result };
 	};
 
@@ -422,7 +426,7 @@ export class JalangiAnalysis {
 	 * @param {Array} args - List of the arguments with which the function is called
 	 * @returns {undefined} - Any return value is ignored
 	 */
-	functionEnter(iid: number, f: Function, dis: any, args: Array<any>): void {
+	functionEnter(iid: number, f: NamedFunction, dis: any, args: Array<any>): void {
 	};
 
 	/**
@@ -621,7 +625,7 @@ export class JalangiAnalysis {
 	 * @returns {boolean} - If true is returned the instrumented function body is executed, otherwise the
 	 * uninstrumented function body is executed.
 	 */
-	runInstrumentedFunctionBody(iid: number, f: Function, functionIid: number, functionSid: number): boolean {
+	runInstrumentedFunctionBody(iid: number, f: NamedFunction, functionIid: number, functionSid: number): boolean {
 		return false;
 	};
 
