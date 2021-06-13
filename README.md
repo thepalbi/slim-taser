@@ -11,5 +11,5 @@ docker run -v `pwd`/:/analysis -v `pwd`/test_libs/:/test_libs -ti CONTAINER_TAG 
 4. Inside the container, run the analysis with:
 ```bash
 cd /test_libs/spawn/
-slim-taser ./node_modules/.bin/mocha test
+LIBRARY_ROOT_DIR=`pwd` LIBRARY_UNDER_TEST=spawn slim-taser ./node_modules/.bin/mocha test
 ```
