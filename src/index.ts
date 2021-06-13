@@ -21,20 +21,39 @@ class BorderSink {
     }
 }
 
+class KnownSink {
+    constructor(public f: Function, public name: string) {
+    }
+}
+
 // DO NOT INSTRUMENT
 class SomeAnalysis extends JalangiAnalysis {
     private readonly libraryUnderTest: string;
     private readonly lutRootDirectory: string;
     private entryPoints: BorderSink[] = [];
+    private knownSinks: KnownSink[] = [];
 
     constructor() {
         super();
         this.libraryUnderTest = getEnvVarOrFail("LIBRARY_UNDER_TEST");
         this.lutRootDirectory = getEnvVarOrFail("LIBRARY_ROOT_DIR");
+        this.registerKnownSinks();
+    }
+
+    private registerKnownSinks(): void {
+        console.log("Registering known sinks!");
+        //@ts-ignore
+        const cp = require("child_process");
+        this.knownSinks.push(new KnownSink(cp.exec, "child_process.exec"));
     }
 
     invokeFunPre(iid: number, f: NamedFunction, base: Object, args: Object[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean } | undefined {
         debug("Called function named: %s", f.name);
+        for (let kSink of this.knownSinks) {
+            if (f === kSink.f) {
+                console.log("Reached the known sink [%s]", kSink.name);
+            }
+        }
         return super.invokeFunPre(iid, f, base, args, isConstructor, isMethod, functionIid, functionSid);
     }
 
