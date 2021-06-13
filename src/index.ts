@@ -1,8 +1,10 @@
+// DO NOT INSTRUMENT
 import {JalangiAnalysis} from "./jalangi";
 import {Jalangi} from "./types/Jalanig";
 import {NamedFunction} from "./types/Extensions";
 import {debug as _debug} from "debug";
 import path from "path";
+import {MetaStoreHelper} from "./meta";
 
 const debug = _debug("slim_taser");
 const nodeRequire = require;
@@ -17,21 +19,22 @@ function getEnvVarOrFail(varName: string): string {
 }
 
 class BorderSink {
-    constructor(public repr: string, public val: NamedFunction) {
+    constructor(public repr: string, public f: NamedFunction) {
     }
 }
 
 class KnownSink {
-    constructor(public f: Function, public name: string) {
+    constructor(public f: Function, public name: string, public argumentFilter: (args: any[]) => boolean) {
     }
 }
 
-// DO NOT INSTRUMENT
 class SomeAnalysis extends JalangiAnalysis {
     private readonly libraryUnderTest: string;
     private readonly lutRootDirectory: string;
     private entryPoints: BorderSink[] = [];
     private knownSinks: KnownSink[] = [];
+    private metaStore = new MetaStoreHelper(false);
+    private static TAINTED_META_KEY = "tainted";
 
     constructor() {
         super();
@@ -44,17 +47,39 @@ class SomeAnalysis extends JalangiAnalysis {
         console.log("Registering known sinks!");
         //@ts-ignore
         const cp = require("child_process");
-        this.knownSinks.push(new KnownSink(cp.exec, "child_process.exec"));
+        this.knownSinks.push(new KnownSink(cp.exec, "child_process.exec", (args => {
+            if (args.length < 1) return false;
+            let meta = this.metaStore.read(args[0], SomeAnalysis.TAINTED_META_KEY);
+            return <boolean>meta;
+        })));
     }
 
-    invokeFunPre(iid: number, f: NamedFunction, base: Object, args: Object[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean } | undefined {
+    invokeFunPre(iid: number, f: NamedFunction, base: Object, args: any[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean } | undefined {
+        let oArgs = args;
+
         debug("Called function named: %s", f.name);
+
         for (let kSink of this.knownSinks) {
             if (f === kSink.f) {
                 console.log("Reached the known sink [%s]", kSink.name);
+                args.forEach((arg, i) => console.log("Argument %d is: value=[%s] tainted=[%s]", i, arg, this.metaStore.read(arg, SomeAnalysis.TAINTED_META_KEY)));
+                console.log("Known sinks arguments tainted evaluate to: ", kSink.argumentFilter(args));
             }
         }
-        return super.invokeFunPre(iid, f, base, args, isConstructor, isMethod, functionIid, functionSid);
+        for (let entryPoint of this.entryPoints) {
+            if (f === entryPoint.f) {
+                // If I'm in an entrypoint, and there are native type arguments, override them with their object counterparts
+                oArgs = args.map(arg => {
+                    if (["string", "number", "boolean"].includes(typeof arg)) return nativeToObject(arg);
+                    return arg;
+                })
+
+                // Mark as tainted all args in this entrypoint
+                console.log("Entrypoint reached [%s]", entryPoint.repr);
+                oArgs.forEach(arg => this.metaStore.store(arg, SomeAnalysis.TAINTED_META_KEY, true));
+            }
+        }
+        return super.invokeFunPre(iid, f, base, oArgs, isConstructor, isMethod, functionIid, functionSid);
     }
 
     invokeFun(iid: number, f: NamedFunction, base: any, args: any[], result: any, isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { result: any } | undefined {
@@ -92,6 +117,16 @@ class SomeAnalysis extends JalangiAnalysis {
 
     endExecution(): void {
         console.log("Discovered %d entrypoints: %s", this.entryPoints.length, this.entryPoints.map(ep => ep.repr).join(","));
+    }
+}
+
+function nativeToObject(v: string | number | boolean): Object {
+    if (typeof v === "string") {
+        return new String(v);
+    } else if (typeof v === "number") {
+        return new Number(v);
+    } else {
+        return new Boolean(v);
     }
 }
 

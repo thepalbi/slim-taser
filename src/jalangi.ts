@@ -1,3 +1,4 @@
+// DO NOT INSTRUMENT
 /*
  * Copyright 2014 Samsung Information Systems America, Inc.
  *
@@ -100,8 +101,6 @@ import {NamedFunction} from "./types/Extensions";
 * @global
 * @class
 */
-
-// DO NOT INSTRUMENT
 export class JalangiAnalysis {
 
 	/**
@@ -144,7 +143,7 @@ export class JalangiAnalysis {
 	 * an object is returned.
 	 *
 	 */
-	invokeFunPre(iid: number, f: NamedFunction, base: Object, args: Object[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean; } | undefined {
+	invokeFunPre(iid: number, f: NamedFunction, base: Object, args: any[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean; } | undefined {
 		return { f: f, base: base, args: args, skip: false };
 	};
 
