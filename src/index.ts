@@ -62,8 +62,8 @@ class SomeAnalysis extends JalangiAnalysis {
         for (let kSink of this.knownSinks) {
             if (f === kSink.f) {
                 console.log("Reached the known sink [%s]", kSink.name);
-                args.forEach((arg, i) => console.log("Argument %d is: value=[%s] tainted=[%s]", i, arg, this.metaStore.read(arg, SomeAnalysis.TAINTED_META_KEY)));
-                console.log("Known sinks arguments tainted evaluate to: ", kSink.argumentFilter(args));
+                oArgs.forEach((arg, i) => console.log("Argument %d is: value=[%s] tainted=[%s]", i, arg, this.metaStore.read(arg, SomeAnalysis.TAINTED_META_KEY)));
+                console.log("Known sinks arguments tainted evaluate to: ", kSink.argumentFilter(oArgs));
             }
         }
         for (let entryPoint of this.entryPoints) {
@@ -77,9 +77,11 @@ class SomeAnalysis extends JalangiAnalysis {
                 // Mark as tainted all args in this entrypoint
                 console.log("Entrypoint reached [%s]", entryPoint.repr);
                 oArgs.forEach(arg => this.metaStore.store(arg, SomeAnalysis.TAINTED_META_KEY, true));
+                oArgs.forEach((arg, i) => console.log("Argument %d is: value=[%s] tainted=[%s]", i, arg, this.metaStore.read(arg, SomeAnalysis.TAINTED_META_KEY)));
             }
         }
-        return super.invokeFunPre(iid, f, base, oArgs, isConstructor, isMethod, functionIid, functionSid);
+
+        return {f: f, args: oArgs, base: base, skip: false};
     }
 
     invokeFun(iid: number, f: NamedFunction, base: any, args: any[], result: any, isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { result: any } | undefined {
