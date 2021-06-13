@@ -1,8 +1,6 @@
 #!/bin/bash
 
-NODEPROF_DIR=/graalvm-nodeprof-java8-20.2.0-dev
-NODE_BINARY=$NODEPROF_DIR/bin/node
-OPTS=--experimental-options
-SLIM_TASER_MAIN=/analysis/dist/index.js
-
-$NODE_BINARY $OPTS --nodeprof $NODEPROF_DIR/nodeprof/nodeprof.js --analysis $SLIM_TASER_MAIN $@
+$PATH_GRAALVM/bin/node --jvm --experimental-options \
+  --vm.Dtruffle.class.path.append=$PATH_NODEPROF_JAR/nodeprof.jar \
+  --nodeprof $PATH_NODEPROF/src/ch.usi.inf.nodeprof/js/jalangi.js \
+  --analysis /persistent2/tsm-setup/taser/dist/src/AintNodeTaint.js $@
