@@ -6,7 +6,7 @@ import {debug as _debug} from "debug";
 import path from "path";
 import {MetaStoreHelper} from "./meta";
 
-const debug = _debug("slim_taser");
+const debug = _debug("slim_taser:main");
 const nodeRequire = require;
 declare var J$: Jalangi;
 
@@ -57,8 +57,6 @@ class SomeAnalysis extends JalangiAnalysis {
     invokeFunPre(iid: number, f: NamedFunction, base: Object, args: any[], isConstructor: boolean, isMethod: boolean, functionIid: number, functionSid: number): { f: NamedFunction; base: object; args: Array<any>; skip: boolean } | undefined {
         let oArgs = args;
 
-        debug("Called function named: %s", f.name);
-
         for (let kSink of this.knownSinks) {
             if (f === kSink.f) {
                 console.log("Reached the known sink [%s]", kSink.name);
@@ -107,8 +105,8 @@ class SomeAnalysis extends JalangiAnalysis {
                     for (let [key, value] of Object.entries(actualLut)) {
                         if (typeof value === "function") {
                             let valueAsNF = value as NamedFunction;
-                            this.entryPoints.push(funToBorderSink(this.libraryUnderTest, actualLut as NamedFunction, false));
-                            debug("Discovered entrypoint called [%s]", valueAsNF.name);
+                            this.entryPoints.push(funToBorderSink(this.libraryUnderTest, valueAsNF, false, key));
+                            debug("Discovered entrypoint called [%s]", key);
                         }
                     }
                 }
@@ -132,12 +130,13 @@ function nativeToObject(v: string | number | boolean): Object {
     }
 }
 
-function funToBorderSink(requireCtx: string, f: NamedFunction, isSingleExport: boolean): BorderSink {
+function funToBorderSink(requireCtx: string, f: NamedFunction, isSingleExport: boolean, overrideName?: string): BorderSink {
     let repr = `root ${requireCtx}`;
     if (isSingleExport) {
         repr = `return (${repr})`;
     } else {
-        repr = `member ${f.name} (${repr})`;
+        let fName = overrideName != undefined ? overrideName : f.name;
+        repr = `member ${fName} (${repr})`;
     }
     return new BorderSink(repr, f);
 }
