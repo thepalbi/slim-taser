@@ -13,3 +13,12 @@ docker run -v `pwd`/:/analysis -v `pwd`/test_libs/:/test_libs -ti CONTAINER_TAG 
 cd /test_libs/spawn/
 LIBRARY_ROOT_DIR=`pwd` LIBRARY_UNDER_TEST=spawn slim-taser ./node_modules/.bin/mocha test
 ```
+5. Or use the following to run slim-taser in an spurious container:
+```bash
+docker run \
+    -v `pwd`/:/analysis -v `pwd`/test_libs/:/test_libs \
+    -w /test_libs/spawn \
+    -e LIBRARY_ROOT_DIR=/test_libs/spawn \
+    -e LIBRARY_UNDER_TEST=spawn \
+        7497c0c769e1 slim-taser ./node_modules/.bin/mocha test
+```
