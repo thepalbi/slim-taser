@@ -2,6 +2,7 @@
 import {debug as _debug} from "debug";
 
 const debug = _debug("slim_taser:meta");
+const debugError = _debug("slim_taser:meta:error");
 
 export class MetaStoreHelper {
     public static META_KEY = "mapping23$^42";
@@ -40,7 +41,7 @@ export class MetaStoreHelper {
             object[MetaStoreHelper.META_KEY] = Object.create(null);
             return object[MetaStoreHelper.META_KEY];
         } catch (e) {
-            debug("Failed to create meta store on object: %s", e);
+            debugError("Failed to create meta store on object: %s", e);
             return {};
         }
     }

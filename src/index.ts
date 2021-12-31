@@ -67,10 +67,7 @@ class SomeAnalysis extends JalangiAnalysis {
         for (let entryPoint of this.entryPoints) {
             if (f === entryPoint.f) {
                 // If I'm in an entrypoint, and there are native type arguments, override them with their object counterparts
-                oArgs = args.map(arg => {
-                    if (["string", "number", "boolean"].includes(typeof arg)) return nativeToObject(arg);
-                    return arg;
-                })
+                oArgs = args.map(nativeToObjectIfNeeded);
 
                 // Mark as tainted all args in this entrypoint
                 console.log("Entrypoint reached [%s]", entryPoint.repr);
@@ -115,9 +112,26 @@ class SomeAnalysis extends JalangiAnalysis {
         return {result: result};
     }
 
+
+    getField(iid: number, base: any, offset: string | any, val: any, isComputed: boolean, isOpAssign: boolean, isMethodCall: boolean): { result: any } | undefined {
+        // Intercept the returned value of the field access, and convert to object if it's not
+        val = nativeToObjectIfNeeded(val);
+        let baseTainted = this.metaStore.read(base, SomeAnalysis.TAINTED_META_KEY);
+        if (<boolean>baseTainted) {
+            debug("Propagating taint %s -> %s[%s]", base, base, offset);
+            this.metaStore.store(val, SomeAnalysis.TAINTED_META_KEY, true);
+        }
+        return {result: val};
+    }
+
     endExecution(): void {
         console.log("Discovered %d entrypoints: %s", this.entryPoints.length, this.entryPoints.map(ep => ep.repr).join(","));
     }
+}
+
+function nativeToObjectIfNeeded(v: any): any {
+    if (["string", "number", "boolean"].includes(typeof v)) return nativeToObject(v);
+    return v;
 }
 
 function nativeToObject(v: string | number | boolean): Object {
